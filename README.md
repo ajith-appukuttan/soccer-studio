@@ -1,113 +1,105 @@
 # Soccer Studio
 
-An enterprise-grade SaaS solution for soccer match analysis and training video editing with AI-powered insights.
+A professional soccer video analysis platform with frame-by-frame navigation, drawing annotations, voice commentary, and export functionality.
+
+## 🚀 Live Demo
+
+**Try it now:** [soccer-studio.vercel.app](https://soccer-studio.vercel.app)
+
+*Note: Demo deployment in progress. See [DEPLOYMENT.md](./DEPLOYMENT.md) for hosting instructions.*
 
 ## 🏆 Features
 
-### Phase 1: Core Platform
-- ✅ **Video Editor**: Professional-grade video editing with timeline, annotations, and drawing tools
-- ✅ **Real-time Collaboration**: Multiple users can edit simultaneously with live cursor sharing
-- ✅ **Drawing Tools**: Circle, line, arrow, text, player markers, and formation diagrams
-- ✅ **Timeline Management**: Keyframe-based annotation system with zoom and scrubbing
-- ✅ **Comment System**: Timestamped comments with threading and replies
-- ✅ **Theme System**: Dark/light modes with custom branding support
-- ✅ **Multi-tenant SaaS**: Organization-based isolation and subscription management
+### Core Functionality
+- ✅ **Frame-Perfect Navigation**: Use ← → arrow keys for frame navigation, Shift + ← → for 10-second jumps
+- ✅ **Professional Drawing Tools**: Pen, line, rectangle, circle, arrow, text, and player markers
+- ✅ **Voice Commentary**: Record voice annotations synchronized with video timeline
+- ✅ **Interactive Timeline**: 1x-100x zoom with bookmarks and annotation markers
+- ✅ **Smart Export System**: Export videos with annotations and mixed audio commentary
+- ✅ **Client-Side Storage**: All data stored in browser IndexedDB (no backend required)
+- ✅ **Project Management**: Save/load projects with auto-save functionality
 
-### Phase 2: AI Analysis (Coming Soon)
-- 🔄 **Jersey Detection**: OpenCV.js-powered player identification
-- 🔄 **Tactical Analysis**: Claude Vision API for formation and movement analysis
-- 🔄 **Auto-highlights**: Intelligent moment detection and summarization
-- 🔄 **Performance Metrics**: Player tracking and statistical analysis
+### Technical Highlights  
+- ✅ **Zero Backend Dependencies**: Fully client-side application
+- ✅ **Canvas-Based Annotations**: High-performance drawing with Konva.js
+- ✅ **Audio Recording**: MediaRecorder API for voice commentary
+- ✅ **Video Processing**: Browser-native video manipulation
+- ✅ **Responsive Design**: Works on desktop and tablet devices
 
 ## 🏗 Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   API Gateway   │    │  Auth Service   │
-│   React + TS    │◄──►│   Express.js    │◄──►│   Express.js    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                       ┌────────┼────────┐
-                       │                 │
-            ┌─────────────────┐    ┌─────────────────┐
-            │ Video Service   │    │  User Service   │
-            │  + FFmpeg       │    │   + Prisma      │
-            └─────────────────┘    └─────────────────┘
-                       │                 │
-            ┌─────────────────┐    ┌─────────────────┐
-            │  MinIO Storage  │    │   PostgreSQL    │
-            │  (S3-compat)    │    │   Database      │
-            └─────────────────┘    └─────────────────┘
+┌─────────────────────────────────────┐
+│           Soccer Studio             │
+│        (Client-Side React App)      │
+├─────────────────────────────────────┤
+│  🎥 Video Player    📝 Annotations  │
+│  🎙️  Voice Recorder  ⏱️  Timeline    │
+│  🎨 Drawing Tools   📁 Projects     │
+└─────────────────────────────────────┘
+           │              │
+    ┌──────────────┐ ┌──────────────┐
+    │   Browser    │ │  IndexedDB   │
+    │   Web APIs   │ │   Storage    │
+    └──────────────┘ └──────────────┘
 ```
+
+**No Backend Required** - Everything runs in your browser!
 
 ## 🛠 Technology Stack
 
-- **Frontend**: React 18, TypeScript, Mantine UI, Zustand, Konva.js, Video.js
-- **Backend**: Express.js, TypeScript, Prisma, PostgreSQL, Redis
-- **Storage**: MinIO (S3-compatible), Video streaming
-- **DevOps**: Docker, Kubernetes, Kind, Tilt, Prometheus, Grafana
-- **AI/ML**: Claude API, OpenCV.js, FFmpeg
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Framework**: Mantine v7 components and styling
+- **Canvas**: Konva.js for high-performance drawing annotations
+- **State Management**: Zustand for lightweight state management  
+- **Audio**: MediaRecorder API for voice commentary recording
+- **Storage**: IndexedDB for client-side project persistence
+- **Video**: HTML5 Video API for playback and frame navigation
+- **Export**: Canvas API + MediaRecorder for video rendering
 
 ## 🚀 Quick Start
 
-### Container Runtime Options
-
-Choose your preferred container runtime:
-
-#### Option A: Skaffold + Kubernetes (Recommended for Production-Ready Development)
-- **Skaffold** - Kubernetes-native development with hot reload
-- **Kind** - Kubernetes in Docker for local development
-- See [SKAFFOLD_SETUP.md](./SKAFFOLD_SETUP.md) for detailed instructions
-
-Quick start with Skaffold:
-```bash
-# Install prerequisites
-brew install skaffold kubectl kind
-
-# Start development environment
-./scripts/skaffold-dev.sh
-
-# Optional: Install monitoring dashboard
-./scripts/install-lens.sh        # Desktop app (recommended)
-./scripts/install-k9s.sh         # Terminal UI
-./scripts/setup-k8s-dashboard.sh # Web dashboard
-```
-
-#### Option B: Podman (Recommended for Security)
-- **Podman** - Rootless, daemonless container runtime
-- See [PODMAN_SETUP.md](./PODMAN_SETUP.md) for detailed instructions
-
-Quick start with Podman:
-```bash
-# Install Podman (if not already installed)
-brew install podman  # macOS
-
-# Start development environment
-./scripts/dev-podman.sh
-```
-
-#### Option C: Docker + Tilt (Legacy)
-- **Docker Desktop**
-- **Kind** (Kubernetes in Docker)
-- **Tilt**
-
-### Prerequisites (Docker Setup)
-
-- Node.js 18+
-- Docker Desktop
-- Kind (Kubernetes in Docker)
-- Tilt
-
-### Automated Setup (Docker)
+### Local Development
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd soccer-training-react
+git clone https://github.com/ajith-appukuttan/soccer-studio.git
+cd soccer-studio
 
-# Run the setup script
-./scripts/setup.sh
+# Install dependencies
+npm install
+cd packages/frontend && npm install
+
+# Start development server
+npm run dev
+
+# Open browser to http://localhost:8000
 ```
+
+### Production Build
+
+```bash
+# Build for production
+cd packages/frontend
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+### Usage
+
+1. **Upload a video**: Click "Upload Video" and select an MP4/MOV file
+2. **Navigate frames**: Use ← → arrow keys for frame-by-frame, Shift + ← → for 10-second jumps
+3. **Draw annotations**: Select tools from the toolbar and draw on the video
+4. **Record voice commentary**: Use the microphone button to record synchronized audio
+5. **Add bookmarks**: Click on the timeline to mark important moments
+6. **Export video**: Click export when you have annotations or voice commentary
+
+### Deployment
+
+Ready to deploy to Vercel, Netlify, or any static hosting platform.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
 
 The setup script will:
 1. Check prerequisites
@@ -148,20 +140,20 @@ The setup script will:
 ## 📁 Project Structure
 
 ```
-soccer-training-platform/
-├── packages/
-│   ├── frontend/          # React application
-│   ├── api-gateway/       # API gateway service
-│   ├── auth-service/      # Authentication microservice
-│   ├── video-service/     # Video processing service
-│   ├── user-service/      # User management service
-│   └── shared/           # Shared types and utilities
-├── infrastructure/
-│   ├── docker/           # Docker configurations
-│   ├── k8s/             # Kubernetes manifests
-│   └── monitoring/      # Monitoring setup
-├── scripts/             # Development scripts
-└── docs/               # Documentation
+soccer-studio/
+├── packages/frontend/         # React application (main app)
+│   ├── src/
+│   │   ├── components/       # React components
+│   │   │   ├── editor/      # Video editor components
+│   │   │   └── layout/      # Layout components
+│   │   ├── services/        # Browser APIs and utilities
+│   │   ├── stores/          # Zustand state management
+│   │   └── types/           # TypeScript definitions
+│   ├── dist/               # Built application
+│   └── public/             # Static assets
+├── docs/                   # Documentation
+├── scripts/               # Development scripts
+└── vercel.json            # Deployment configuration
 ```
 
 ## 🎮 Usage
