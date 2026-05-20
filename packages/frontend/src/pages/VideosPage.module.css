@@ -1,0 +1,201 @@
+.videoCard {
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.videoCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.videoCard .thumbnail {
+  position: relative;
+  background: var(--mantine-color-gray-1);
+  overflow: hidden;
+}
+
+.videoCard .thumbnail::before {
+  content: '';
+  display: block;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.videoCard .thumbnail img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 200ms ease;
+}
+
+.videoCard:hover .thumbnail img {
+  transform: scale(1.05);
+}
+
+.videoInfo {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+.videoTitle {
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.videoMeta {
+  font-size: 0.75rem;
+  color: var(--mantine-color-gray-6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.videoCard:hover .actionButtons {
+  opacity: 1;
+}
+
+.filterSection {
+  background: var(--mantine-color-gray-0);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+[data-mantine-color-scheme='dark'] .filterSection {
+  background: var(--mantine-color-dark-7);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  border: 2px dashed var(--mantine-color-gray-3);
+  border-radius: 12px;
+  background: var(--mantine-color-gray-0);
+  transition: all 200ms ease;
+}
+
+.emptyState:hover {
+  border-color: var(--mantine-color-blue-4);
+  background: var(--mantine-color-blue-0);
+}
+
+[data-mantine-color-scheme='dark'] .emptyState {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+[data-mantine-color-scheme='dark'] .emptyState:hover {
+  background: var(--mantine-color-dark-5);
+  border-color: var(--mantine-color-blue-6);
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  color: var(--mantine-color-gray-4);
+  margin-bottom: 16px;
+  transition: color 200ms ease;
+}
+
+.emptyState:hover .emptyStateIcon {
+  color: var(--mantine-color-blue-5);
+}
+
+/* Status badges */
+.statusBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusProcessing {
+  background: var(--mantine-color-yellow-0);
+  color: var(--mantine-color-yellow-7);
+}
+
+.statusReady {
+  background: var(--mantine-color-green-0);
+  color: var(--mantine-color-green-7);
+}
+
+.statusFailed {
+  background: var(--mantine-color-red-0);
+  color: var(--mantine-color-red-7);
+}
+
+/* Progress styling */
+.uploadProgress {
+  margin-top: 8px;
+}
+
+.uploadProgressText {
+  font-size: 0.75rem;
+  color: var(--mantine-color-blue-6);
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .videoCard {
+    border-radius: 8px;
+  }
+  
+  .videoInfo {
+    padding: 12px;
+  }
+  
+  .filterSection {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .emptyState {
+    padding: 3rem 1rem;
+  }
+}
+
+/* Accessibility improvements */
+.videoCard:focus-visible {
+  outline: 2px solid var(--mantine-color-blue-5);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videoCard,
+  .videoCard .thumbnail img,
+  .actionButtons,
+  .emptyState,
+  .emptyStateIcon {
+    transition: none;
+  }
+  
+  .videoCard:hover,
+  .videoCard:hover .thumbnail img {
+    transform: none;
+  }
+}

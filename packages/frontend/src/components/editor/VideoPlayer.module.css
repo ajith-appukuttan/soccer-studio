@@ -1,0 +1,61 @@
+.container {
+  position: relative;
+  background-color: black;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+.container video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeInfo {
+  color: white;
+  font-size: 14px;
+  min-width: 100px;
+}
+
+.timeline {
+  flex: 1;
+  margin: 0 12px;
+}
+
+.volumeControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.volumeSlider {
+  width: 60px;
+}
+
+/* Annotation canvas overlay */
+.annotationOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.annotationOverlay.interactive {
+  pointer-events: auto;
+}

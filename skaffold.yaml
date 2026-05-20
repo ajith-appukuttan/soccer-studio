@@ -1,0 +1,115 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+metadata:
+  name: soccer-training-platform
+
+# Build configuration
+build:
+  artifacts:
+  - image: soccer-training/frontend
+    context: .
+    docker:
+      dockerfile: packages/frontend/Dockerfile
+      target: development
+    sync:
+      manual:
+      - src: "packages/frontend/src/**/*"
+        dest: /app/src
+      - src: "packages/frontend/public/**/*"
+        dest: /app/public
+      - src: "packages/frontend/package.json"
+        dest: /app/package.json
+        strip: "packages/frontend/"
+  
+  - image: soccer-training/api-gateway
+    context: .
+    docker:
+      dockerfile: packages/api-gateway/Dockerfile
+      target: development
+    sync:
+      manual:
+      - src: "packages/api-gateway/src/**/*"
+        dest: /app/src
+      - src: "packages/api-gateway/prisma/**/*"
+        dest: /app/prisma
+      - src: "packages/api-gateway/package.json"
+        dest: /app/package.json
+        strip: "packages/api-gateway/"
+
+  # Shared packages
+  local:
+    push: false
+
+# Deploy configuration
+manifests:
+  rawYaml:
+  - infrastructure/k8s/base/namespace.yaml
+  - infrastructure/k8s/base/postgres.yaml
+  - infrastructure/k8s/skaffold/redis.yaml
+  - infrastructure/k8s/skaffold/frontend.yaml
+  - infrastructure/k8s/skaffold/api-gateway.yaml
+
+# Port forwarding for development
+portForward:
+- resourceType: service
+  resourceName: frontend
+  namespace: soccer-training
+  port: 6000
+  localPort: 6000
+
+- resourceType: service
+  resourceName: api-gateway
+  namespace: soccer-training
+  port: 6001
+  localPort: 6001
+
+- resourceType: service
+  resourceName: postgres
+  namespace: soccer-training
+  port: 5432
+  localPort: 6002
+
+- resourceType: service
+  resourceName: redis
+  namespace: soccer-training
+  port: 6379
+  localPort: 6003
+
+# Development profiles
+profiles:
+# Development profile with hot reload
+- name: dev
+  build:
+    artifacts:
+    - image: soccer-training/frontend
+      context: packages/frontend
+      docker:
+        target: development
+        buildArgs:
+          NODE_ENV: development
+    - image: soccer-training/api-gateway
+      context: packages/api-gateway
+      docker:
+        target: development
+        buildArgs:
+          NODE_ENV: development
+
+# Production profile
+- name: prod
+  build:
+    artifacts:
+    - image: soccer-training/frontend
+      context: packages/frontend
+      docker:
+        target: production
+        buildArgs:
+          NODE_ENV: production
+    - image: soccer-training/api-gateway
+      context: packages/api-gateway
+      docker:
+        target: production
+        buildArgs:
+          NODE_ENV: production
+
+# Testing profile  
+- name: test

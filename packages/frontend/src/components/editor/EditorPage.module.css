@@ -1,0 +1,25 @@
+/* EditorPage styles - placeholder for now */
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.editorArea {
+  flex: 1;
+  display: flex;
+}
+
+.toolPalette {
+  width: 280px;
+  border-right: 1px solid var(--mantine-color-gray-3);
+}
+
+.videoArea {
+  flex: 1;
+}
+
+.propertiesPanel {
+  width: 320px;
+  border-left: 1px solid var(--mantine-color-gray-3);
+}

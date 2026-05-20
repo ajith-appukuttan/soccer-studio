@@ -1,0 +1,72 @@
+# Kind cluster configuration for Soccer Training Platform
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: soccer-training-dev
+
+# Networking configuration
+networking:
+  # Disable default CNI and use Calico
+  disableDefaultCNI: false
+  # API server configuration
+  apiServerAddress: "127.0.0.1"
+  apiServerPort: 6443
+
+# Cluster nodes configuration
+nodes:
+# Control plane node
+- role: control-plane
+  image: kindest/node:v1.27.3
+  # Port mappings for local access
+  extraPortMappings:
+  # Frontend
+  - containerPort: 30080
+    hostPort: 6000
+    protocol: TCP
+  # API Gateway  
+  - containerPort: 30081
+    hostPort: 6001
+    protocol: TCP
+  # PostgreSQL
+  - containerPort: 30082
+    hostPort: 6002
+    protocol: TCP
+  # Redis
+  - containerPort: 30083
+    hostPort: 6003
+    protocol: TCP
+  # Kubernetes Dashboard (optional)
+  - containerPort: 30090
+    hostPort: 8080
+    protocol: TCP
+  
+  # Extra mounts for development
+  extraMounts:
+  # Mount Docker socket for building images
+  - hostPath: /var/run/docker.sock
+    containerPath: /var/run/docker.sock
+
+# Worker node (optional, for multi-node testing)
+- role: worker
+  image: kindest/node:v1.27.3
+
+# Cluster configuration
+kubeadmConfigPatches:
+- |
+  kind: InitConfiguration
+  nodeRegistration:
+    kubeletExtraArgs:
+      node-labels: "ingress-ready=true"
+      
+- |
+  kind: KubeletConfiguration
+  maxPods: 250
+  
+- |
+  kind: KubeProxyConfiguration
+  mode: ipvs
+
+# Feature gates
+featureGates:
+  # Enable useful features
+  "EphemeralContainers": true
+  "kubectl-debug": true

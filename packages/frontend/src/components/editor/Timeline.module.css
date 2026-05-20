@@ -1,0 +1,93 @@
+.container {
+  height: 120px;
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
+  border-top: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+}
+
+.timelineWrapper {
+  position: relative;
+  height: 60px;
+}
+
+.timeline {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  overflow: hidden;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  border-radius: var(--mantine-radius-sm);
+  cursor: pointer;
+}
+
+.timeScale {
+  position: relative;
+  height: 20px;
+  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+}
+
+.timeMark {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.timeMarkLine {
+  width: 1px;
+  height: 100%;
+  background: light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3));
+}
+
+.timeMarkLabel {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-gray-3));
+  font-size: 10px;
+  line-height: 1;
+}
+
+.timelineTrack {
+  position: relative;
+  height: 29px;
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
+}
+
+.timelineBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7)) 0%,
+    light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6)) 50%,
+    light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7)) 100%
+  );
+}
+
+.annotationMarker {
+  position: absolute;
+  top: 5px;
+  width: 6px;
+  height: 19px;
+  border-radius: 3px;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.1s ease;
+}
+
+.annotationMarker:hover {
+  transform: scaleY(1.2);
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--mantine-color-red-6);
+  z-index: 3;
+  pointer-events: none;
+}

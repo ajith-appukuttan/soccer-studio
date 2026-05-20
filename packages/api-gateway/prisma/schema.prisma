@@ -1,0 +1,293 @@
+// Soccer Training Platform - Prisma Schema
+// Enterprise-grade database schema for video analysis and collaboration
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ================================
+// ORGANIZATIONS & USERS
+// ================================
+
+model Organization {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  domain          String?
+  plan            PlanType @default(FREE)
+  maxUsers        Int      @default(5)
+  maxStorageGB    Int      @default(10)
+  allowVideoUpload Boolean  @default(true)
+  features        String[]  // JSON array of feature flags
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now()) @db.Timestamptz
+  updatedAt       DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  users           User[]
+  videos          Video[]
+  projects        Project[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  email          String   @unique
+  firstName      String
+  lastName       String
+  passwordHash   String
+  role           UserRole @default(VIEWER)
+  organizationId String   @db.Uuid
+  isActive       Boolean  @default(true)
+  lastLoginAt    DateTime? @db.Timestamptz
+  createdAt      DateTime @default(now()) @db.Timestamptz
+  updatedAt      DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ownedProjects  Project[]    @relation("ProjectOwner")
+  collaborations ProjectCollaborator[]
+  annotations    Annotation[]
+  comments       Comment[]
+  uploadedVideos Video[]
+  analysisJobs   AnalysisJob[]
+
+  @@map("users")
+}
+
+// ================================
+// VIDEOS
+// ================================
+
+model Video {
+  id             String      @id @default(uuid()) @db.Uuid
+  title          String
+  description    String?
+  filename       String
+  fileSize       BigInt
+  duration       Float       // seconds
+  width          Int
+  height         Int
+  fps            Float
+  format         String
+  uploaderId     String      @db.Uuid
+  organizationId String      @db.Uuid
+  status         VideoStatus @default(UPLOADING)
+  
+  // File URLs
+  originalUrl    String?
+  streamUrl      String?
+  thumbnailUrl   String?
+  
+  // Processing metadata
+  processingLogs Json?       // Processing steps and errors
+  
+  createdAt      DateTime    @default(now()) @db.Timestamptz
+  updatedAt      DateTime    @updatedAt @db.Timestamptz
+
+  // Relations
+  uploader       User         @relation(fields: [uploaderId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projects       Project[]
+  analysisJobs   AnalysisJob[]
+
+  @@map("videos")
+}
+
+// ================================
+// PROJECTS & ANNOTATIONS
+// ================================
+
+model Project {
+  id             String   @id @default(uuid()) @db.Uuid
+  title          String
+  description    String?
+  videoId        String   @db.Uuid
+  ownerId        String   @db.Uuid
+  organizationId String   @db.Uuid
+  
+  // Settings
+  autoSave       Boolean  @default(true)
+  snapToGrid     Boolean  @default(false)
+  gridSize       Int      @default(10)
+  
+  createdAt      DateTime @default(now()) @db.Timestamptz
+  updatedAt      DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  video          Video                   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  owner          User                    @relation("ProjectOwner", fields: [ownerId], references: [id])
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  collaborators  ProjectCollaborator[]
+  annotations    Annotation[]
+  comments       Comment[]
+
+  @@map("projects")
+}
+
+model ProjectCollaborator {
+  id        String               @id @default(uuid()) @db.Uuid
+  projectId String               @db.Uuid
+  userId    String               @db.Uuid
+  role      CollaboratorRole     @default(VIEWER)
+  addedAt   DateTime             @default(now()) @db.Timestamptz
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_collaborators")
+}
+
+model Annotation {
+  id          String         @id @default(uuid()) @db.Uuid
+  projectId   String         @db.Uuid
+  authorId    String         @db.Uuid
+  type        AnnotationType
+  timestamp   Float          // seconds in video
+  startTime   Float?         // for duration annotations
+  endTime     Float?
+  
+  // Annotation data (varies by type)
+  data        Json           // Flexible JSON for different annotation types
+  
+  // Style information
+  style       Json           // Colors, sizes, fonts, etc.
+  
+  createdAt   DateTime       @default(now()) @db.Timestamptz
+  updatedAt   DateTime       @updatedAt @db.Timestamptz
+
+  // Relations
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author      User    @relation(fields: [authorId], references: [id])
+
+  @@map("annotations")
+}
+
+// ================================
+// COMMENTS & COLLABORATION
+// ================================
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  authorId  String   @db.Uuid
+  parentId  String?  @db.Uuid  // For threaded comments
+  
+  content   String
+  timestamp Float    // seconds in video
+  positionX Float?   // screen position (optional)
+  positionY Float?
+  
+  resolved  Boolean  @default(false)
+  
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+// ================================
+// ENUMS
+// ================================
+
+enum PlanType {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum UserRole {
+  ADMIN
+  COACH
+  ANALYST
+  VIEWER
+}
+
+enum VideoStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  ERROR
+}
+
+enum AnnotationType {
+  CIRCLE
+  RECTANGLE
+  LINE
+  ARROW
+  FREEHAND
+  TEXT
+  PLAYER
+  FORMATION
+}
+
+enum CollaboratorRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+// ================================
+// AI ANALYSIS & INSIGHTS
+// ================================
+
+model AnalysisJob {
+  id          String           @id @db.Uuid
+  videoId     String           @db.Uuid
+  userId      String           @db.Uuid
+  status      String           // pending, processing, completed, failed
+  progress    Int              @default(0) // 0-100
+  settings    String           // JSON settings for analysis
+  error       String?
+  startTime   DateTime?        @db.Timestamptz
+  endTime     DateTime?        @db.Timestamptz
+  createdAt   DateTime         @default(now()) @db.Timestamptz
+  updatedAt   DateTime         @updatedAt @db.Timestamptz
+
+  // Relations
+  video       Video            @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results     AnalysisResult[]
+  summary     AnalysisSummary?
+
+  @@map("analysis_jobs")
+}
+
+model AnalysisResult {
+  id          String      @id @db.Uuid
+  jobId       String      @db.Uuid
+  timestamp   Float       // Video timestamp in seconds
+  data        String      // JSON analysis data
+  createdAt   DateTime    @default(now()) @db.Timestamptz
+
+  // Relations
+  job         AnalysisJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("analysis_results")
+}
+
+model AnalysisSummary {
+  id        String      @id @db.Uuid
+  jobId     String      @unique @db.Uuid
+  data      String      // JSON summary data (formations, possession, key moments)
+  createdAt DateTime    @default(now()) @db.Timestamptz
+
+  // Relations
+  job       AnalysisJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("analysis_summaries")
+}

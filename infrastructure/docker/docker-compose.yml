@@ -1,0 +1,229 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: soccer-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: soccer_training
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: soccer-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # MinIO for object storage (S3-compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: soccer-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ../../packages/api-gateway
+      dockerfile: ../../infrastructure/docker/Dockerfile.api-gateway
+    container_name: soccer-api-gateway
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      HOST: 0.0.0.0
+      JWT_SECRET: your-jwt-secret-key-change-in-production
+      DATABASE_URL: postgresql://postgres:password123@postgres:5432/soccer_training
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ../../packages/api-gateway:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Auth Service (Microservice)
+  auth-service:
+    build:
+      context: ../../packages/auth-service
+      dockerfile: ../../infrastructure/docker/Dockerfile.auth-service
+    container_name: soccer-auth-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 4001
+      DATABASE_URL: postgresql://postgres:password123@postgres:5432/soccer_training
+      JWT_SECRET: your-jwt-secret-key-change-in-production
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "4001:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../packages/auth-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Video Service (Microservice)
+  video-service:
+    build:
+      context: ../../packages/video-service
+      dockerfile: ../../infrastructure/docker/Dockerfile.video-service
+    container_name: soccer-video-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 4002
+      DATABASE_URL: postgresql://postgres:password123@postgres:5432/soccer_training
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "4002:4002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ../../packages/video-service:/app
+      - /app/node_modules
+      - video_processing:/tmp/processing
+    command: npm run dev
+
+  # User Service (Microservice)
+  user-service:
+    build:
+      context: ../../packages/user-service
+      dockerfile: ../../infrastructure/docker/Dockerfile.user-service
+    container_name: soccer-user-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 4003
+      DATABASE_URL: postgresql://postgres:password123@postgres:5432/soccer_training
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "4003:4003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../packages/user-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Frontend Development Server
+  frontend:
+    build:
+      context: ../../packages/frontend
+      dockerfile: ../../infrastructure/docker/Dockerfile.frontend
+    container_name: soccer-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:4000/api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../packages/frontend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Prometheus (Monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: soccer-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+  # Grafana (Monitoring Dashboard)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: soccer-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  video_processing:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    name: soccer-training-network

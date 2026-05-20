@@ -1,0 +1,24 @@
+.container {
+  width: 250px;
+  height: 100%;
+  overflow-y: auto;
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
+  border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+}
+
+.divider {
+  height: 1px;
+  background: light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  margin: var(--mantine-spacing-sm) 0;
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.settingGroup {
+  margin-bottom: var(--mantine-spacing-sm);
+}
